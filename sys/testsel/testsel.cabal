@@ -18,9 +18,9 @@ library
 
   exposed-modules:      NComp
                       
-  other-modules:
+  other-modules:        SplitGraph, SuspAut, Util
 
-  ghc-options:         -Werror -O2 -optc-O3 -optc-ffast-math -Wall
+  ghc-options:         -O2 -optc-O3 -optc-ffast-math -Wall
   
   build-depends:        base
                       , containers

@@ -1,4 +1,4 @@
-module SuspAut(SuspAut,State,show,stautToSusp,after,computeCompRel,inp,out,enab,tupleStateSetToString) where
+module SuspAut(SuspAut,State,show,stautToSusp,after,computeCompRel,inp,out,enab,tupleStateSetToString,initial,states,inputs,outputs) where
 
 import Data.Set as Set (Set)
 import qualified Data.Set as Set
@@ -13,11 +13,13 @@ import qualified TxsDefs
 
 import qualified Util as Util
 
-data SuspAut = SuspAut State (Set State) (Map TxsDefs.StatId State)
+data SuspAut = SuspAut {initial :: State, states :: (Set State), idStateMap :: (Map TxsDefs.StatId State), inputs ::  (Set TxsDefs.ChanId), outputs :: (Set TxsDefs.ChanId)}
 instance Show SuspAut where
-    show (SuspAut initial states map) = "Initial: " ++ (show initial) ++ "\n" ++
+    show (SuspAut initial states map inps outs) = "Initial: " ++ (show initial) ++ "\n" ++
                                         "States: " ++ (show states) ++ "\n" ++
-                                        "IdStateMap: " ++ (show $ (Map.mapKeys Util.stateToName . Map.map (Util.stateToName . sid)) map)
+                                        "Input alphabet:" ++ (show $ Set.map Util.chanToName inps) ++
+                                        "Output alphabet:" ++ (show $ Set.map Util.chanToName outs)
+                                        --"IdStateMap: " ++ (show $ (Map.mapKeys Util.stateToName . Map.map (Util.stateToName . sid)) map)
 
 data State = State {sid :: TxsDefs.StatId, inp :: Set TxsDefs.ChanId, out :: Set TxsDefs.ChanId, trans :: Map TxsDefs.ChanId TxsDefs.StatId}
     deriving (Eq, Ord)
@@ -37,7 +39,7 @@ stautToSusp initial transs inps outs = let statemap = stautToStateMap transs inp
                                             Nothing -> error ("Initial state does not have any transitions")
                                             Just (ini,outi,tmapi) ->
                                                 let statesandmap = getStatesAndMap statemap
-                                                in SuspAut (State initial ini outi tmapi) (fst statesandmap) (snd statesandmap)
+                                                in SuspAut (State initial ini outi tmapi) (fst statesandmap) (snd statesandmap) inps outs
 
 getStatesAndMap :: Map TxsDefs.StatId (Set TxsDefs.ChanId, Set TxsDefs.ChanId, Map TxsDefs.ChanId TxsDefs.StatId) -> (Set State, Map TxsDefs.StatId State)
 getStatesAndMap statemap = (Map.foldlWithKey (\setandmap key val -> case val of
@@ -66,12 +68,12 @@ enab :: State -> Set TxsDefs.ChanId
 enab s = Set.union (inp s) (out s)
 
 after :: State -> TxsDefs.ChanId -> SuspAut -> Maybe State
-after (State _ _ _ trans) c (SuspAut _ _ idmap) =  case (Map.lookup c trans) of
+after (State _ _ _ trans) c (SuspAut _ _ idmap _ _) =  case (Map.lookup c trans) of
                                     Nothing -> Nothing
                                     Just s -> Map.lookup s idmap
 
 computeCompRel :: SuspAut -> Set (State,State)
-computeCompRel aut@(SuspAut _ states _) =
+computeCompRel aut@(SuspAut _ states _ _ _) =
                     let first = Set.fromList [(q,q') | q <- Set.toList states,  q' <- Set.toList states] in
                         let second = expandCompRel aut first in
                             computeCompRec first second (expandCompRel aut)
@@ -80,7 +82,7 @@ computeCompRec :: Set (State,State) -> Set (State,State) -> (Set (State,State) -
 computeCompRec first second f = if first == second then first else computeCompRec second (f second) f
 
 expandCompRel :: SuspAut -> Set (State,State) -> Set (State,State)
-expandCompRel aut@(SuspAut _ states _) rel =
+expandCompRel aut@(SuspAut _ states _ _ _) rel =
     Set.fromList [(q,q') | q <- Set.toList states, q' <- Set.toList states,
              let mem = (\c -> Set.member (Maybe.fromJust $ after q c aut, Maybe.fromJust $ after q' c aut)  rel),
              (all mem (Set.intersection (inp q) (inp q'))) && (any mem (Set.intersection (out q) (out q')))]
