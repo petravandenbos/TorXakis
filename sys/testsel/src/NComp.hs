@@ -32,9 +32,11 @@ import qualified Data.Map as Map
 
 import qualified Data.Text           as T
 
-import qualified SplitGraph as SplitGraph
-import qualified SuspAut as SuspAut
-import qualified Util as Util
+import qualified SplitGraph
+import qualified SuspAut
+import qualified Aut
+import qualified Util
+
 
 import qualified EnvCore     as IOC
 
@@ -43,8 +45,6 @@ import qualified StdTDefs
 import qualified TxsDefs
 import qualified ValExpr
 import qualified EnvData
-
-import           Name
 
 -- ----------------------------------------------------------------------------------------- --
 -- nComplete
@@ -55,12 +55,14 @@ nComplete :: [Set TxsDefs.ChanId] -> [Set TxsDefs.ChanId] ->
 
 nComplete insyncs outsyncs initial transs = do
           IOC.putMsgs [ EnvData.TXS_CORE_USER_ERROR (
-            let aut = SuspAut.stautToSusp initial transs (Util.getChanSet insyncs) (Util.getChanSet outsyncs) in
-            "compatible: " ++ SuspAut.tupleStateSetToString (SuspAut.computeCompRel aut)          ) ]
+              let aut = SuspAut.stautToSusp initial transs (Util.getChanSet insyncs) (Util.getChanSet outsyncs) in
+                show $ SplitGraph.makeRoot aut
+                ) ]
+
+          --  "compatible: " ++ SuspAut.tupleStateSetToString (Aut.computeCompRel aut)
           -- SplitGraph.makeRoot $ Set.fromList [1,2,3]
           -- map stateToName $ getStatesFromTransList transs []
           return Nothing
-
 
 
 
