@@ -13,9 +13,12 @@ import qualified TxsDefs
 import qualified Util
 import qualified Aut
 
-type SuspAut = Aut.Aut TxsDefs.StatId
+type SuspAut = Aut.Aut TxsDefs.StatId TxsDefs.ChanId
 
-type SuspState = Aut.State TxsDefs.StatId
+type SuspState = Aut.State TxsDefs.StatId TxsDefs.ChanId
+
+instance Show SuspAut where
+    show (Aut.Aut _ s _ _ _) = show s
 
 instance Show SuspState where
     show (Aut.State s inps outs t) = show (Util.stateToName s,

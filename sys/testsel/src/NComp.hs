@@ -56,7 +56,7 @@ nComplete :: [Set TxsDefs.ChanId] -> [Set TxsDefs.ChanId] ->
 nComplete insyncs outsyncs initial transs = do
           IOC.putMsgs [ EnvData.TXS_CORE_USER_ERROR (
               let aut = SuspAut.stautToSusp initial transs (Util.getChanSet insyncs) (Util.getChanSet outsyncs) in
-                show $ SplitGraph.makeRoot aut
+                show $ SplitGraph.buildSplitGraph aut
                 ) ]
 
           --  "compatible: " ++ SuspAut.tupleStateSetToString (Aut.computeCompRel aut)
@@ -76,7 +76,7 @@ nComplete insyncs outsyncs initial transs = do
          goals    = [ (gid,bexp) | (gid,bexp) <- zip gids (allPaths ini transs) ]
       in return $ Just $ TxsDefs.PurpDef insyncs outsyncs splsyncs goals-}
 
-{-allPaths :: TxsDefs.StatId -> [TxsDefs.Trans] -> [TxsDefs.BExpr]
+allPaths :: TxsDefs.StatId -> [TxsDefs.Trans] -> [TxsDefs.BExpr]
 allPaths ini transs = [ path2bexpr p
                          | p@(TxsDefs.Trans from _a _u _to : _pp) <- List.permutations transs
                          , isPath p
@@ -93,7 +93,7 @@ path2bexpr :: [TxsDefs.Trans] -> TxsDefs.BExpr
 path2bexpr [] = TxsDefs.actionPref
                     (TxsDefs.ActOffer (Set.singleton $ TxsDefs.Offer StdTDefs.chanIdHit []) Set.empty (ValExpr.cstrConst (ConstDefs.Cbool True)))
                     TxsDefs.stop
-path2bexpr (TxsDefs.Trans _from a _u _to : pp) = TxsDefs.actionPref a (path2bexpr pp)-}
+path2bexpr (TxsDefs.Trans _from a _u _to : pp) = TxsDefs.actionPref a (path2bexpr pp)
 
 -- ----------------------------------------------------------------------------------------- --
 --                                                                                           --

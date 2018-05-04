@@ -1,4 +1,4 @@
-module Aut(Aut(..),State(..),show,after,computeCompRel,inp,out,enab,initial,states,inputs,outputs,states) where
+module Aut(Aut(..),State(..),show,after,computeCompRel,inp,out,enab,initial,states,inputs,outputs,states, outSet) where
 
 import Data.Set as Set (Set)
 import qualified Data.Set as Set
@@ -10,35 +10,44 @@ import qualified TxsDefs
 
 import qualified Util
 
-data Aut a = Aut {initial :: (State a), states :: Set (State a), idStateMap :: (Map a (State a)), inputs ::  (Set TxsDefs.ChanId), outputs :: (Set TxsDefs.ChanId)}
-instance (Show a) => Show (Aut a) where
+import Debug.Trace as Trace
+
+data Aut a b = Aut {initial :: (State a b), states :: Set (State a b), idStateMap :: (Map a (State a b)), inputs ::  (Set b), outputs :: (Set b)}
+instance (Show a, Show b) => Show (Aut a b) where
     show (Aut initial states map inps outs) = "Initial: " ++ (show initial) ++ "\n" ++
                                         "States: " ++ (show states) ++ "\n" ++
-                                        "Input alphabet:" ++ (show $ Set.map Util.chanToName inps) ++
-                                        "Output alphabet:" ++ (show $ Set.map Util.chanToName outs)
+                                        "Input alphabet:" ++ (show $ inps) ++
+                                        "Output alphabet:" ++ (show $ outs)
                                         --"IdStateMap: " ++ (show $ (Map.mapKeys Util.stateToName . Map.map (Util.stateToName . sid)) map)
 
-data State a = State {sid :: a, inp :: Set TxsDefs.ChanId, out :: Set TxsDefs.ChanId, trans :: Map TxsDefs.ChanId a}
-    deriving (Eq, Ord,Show)
+data State a b = State {sid :: a, inp :: Set b, out :: Set b, trans :: Map b a}
+    deriving (Ord,Show)
 
-enab :: (State a) -> Set TxsDefs.ChanId
+instance (Eq a) => Eq (State a b) where
+    (==) s1 s2 = (sid s1) == (sid s2)
+    (/=) s1 s2 = (sid s1) /= (sid s2)
+
+enab :: Ord b => (State a b) -> Set b
 enab s = Set.union (inp s) (out s)
 
-after :: Ord a => (State a) -> TxsDefs.ChanId -> (Aut a) -> Maybe (State a)
-after (State _ _ _ trans) c (Aut _ _ idmap _ _) =  case (Map.lookup c trans) of
-                                    Nothing -> Nothing
-                                    Just s -> Map.lookup s idmap
+outSet :: Ord b => Set (State a b) -> Set b
+outSet set = Set.foldl (\chans state -> Set.union chans (out state)) Set.empty set
 
-computeCompRel :: Ord a => (Aut a) -> Set (State a,State a)
+after :: (Ord a, Ord b) => (State a b) -> b -> (Aut a b) -> Maybe (State a b)
+after state mu aut =  case (Map.lookup mu (trans state)) of
+                                    Nothing -> Nothing
+                                    Just s -> Map.lookup s (idStateMap aut)
+
+computeCompRel :: (Ord a, Ord b) => (Aut a b) -> Set (State a b,State a b)
 computeCompRel aut@(Aut _ states _ _ _) =
                     let first = Set.fromList [(q,q') | q <- Set.toList states,  q' <- Set.toList states] in
                         let second = expandCompRel aut first in
                             computeCompRec first second (expandCompRel aut)
 
-computeCompRec :: Eq a => Set (State a,State a) -> Set (State a,State a) -> (Set (State a,State a) -> Set (State a,State a)) -> Set (State a,State a)
+computeCompRec :: (Eq a, Eq b) => Set (State a b,State a b) -> Set (State a b,State a b) -> (Set (State a b,State a b) -> Set (State a b,State a b)) -> Set (State a b,State a b)
 computeCompRec first second f = if first == second then first else computeCompRec second (f second) f
 
-expandCompRel :: Ord a => (Aut a) -> Set (State a,State a) -> Set (State a,State a)
+expandCompRel :: (Ord a, Ord b) => (Aut a b) -> Set (State a b,State a b) -> Set (State a b,State a b)
 expandCompRel aut@(Aut _ states _ _ _) rel =
     Set.fromList [(q,q') | q <- Set.toList states, q' <- Set.toList states,
              let mem = (\c -> Set.member (Maybe.fromJust $ after q c aut, Maybe.fromJust $ after q' c aut)  rel),
