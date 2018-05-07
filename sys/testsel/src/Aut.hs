@@ -15,7 +15,7 @@ import Debug.Trace as Trace
 data Aut a b = Aut {initial :: (State a b), states :: Set (State a b), idStateMap :: (Map a (State a b)), inputs ::  (Set b), outputs :: (Set b)}
 instance (Show a, Show b) => Show (Aut a b) where
     show (Aut initial states map inps outs) = "Initial: " ++ (show initial) ++ "\n" ++
-                                        "States: " ++ (show states) ++ "\n" ++
+                                        "States: " ++ (show $ Set.toList $ states) ++ "\n" ++
                                         "Input alphabet:" ++ (show $ inps) ++
                                         "Output alphabet:" ++ (show $ outs)
                                         --"IdStateMap: " ++ (show $ (Map.mapKeys Util.stateToName . Map.map (Util.stateToName . sid)) map)

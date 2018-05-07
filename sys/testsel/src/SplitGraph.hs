@@ -1,6 +1,6 @@
 {-# LANGUAGE ViewPatterns        #-}
 {-# LANGUAGE ScopedTypeVariables        #-}
-module SplitGraph(buildSplitGraph,show) where
+module SplitGraph(SplitGraph,buildSplitGraph,show,getLCA,evidence,isInjective,injectiveSet) where
 
 import Data.Set as Set (Set)
 import qualified Data.Set as Set
@@ -25,8 +25,8 @@ data SplitNode = SplitNode {nodeStates :: (Set SuspState), children :: Set (Set 
     deriving (Eq,Ord)
 
 instance Show SplitNode where
-    show (SplitNode s c e i) = "node: " ++ (show $ Set.map  (Util.stateToName . Aut.sid) s) ++ "\n" ++
-                               "children: " ++ (show $ Set.map (\n -> Set.map  (Util.stateToName . Aut.sid) n) c) ++ "\n" ++
+    show (SplitNode s c e i) = "node: " ++ (show $ Set.toList $  Set.map  (Util.stateToName . Aut.sid) s) ++ "\n" ++
+                               "children: " ++ (show $ Set.toList $  Set.map (\n -> Set.toList $ Set.map  (Util.stateToName . Aut.sid) n) c) ++ "\n" ++
                                "evidence: " ++ (case e of Nothing -> "No evidence"; Just ev -> Util.bExprToString ev)  ++ "\n" ++
                                "isInjective: " ++ (case i of Nothing -> "Unknown"; Just b -> show b)
 

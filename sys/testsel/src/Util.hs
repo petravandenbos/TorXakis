@@ -4,6 +4,7 @@ module Util where
 import qualified TxsDefs
 import           Name
 import qualified Data.Set as Set
+import qualified Data.List as List
 import qualified BehExprDefs
 import qualified ValExpr
 import qualified ConstDefs
@@ -28,8 +29,8 @@ actOfferToString :: TxsDefs.ActOffer -> String
 actOfferToString act = show $ chanToName $ actOfferToChanid act
 
 bExprToString :: TxsDefs.BExpr -> String
-bExprToString (TxsDefs.view -> BehExprDefs.ActionPref act bexp) = if TxsDefs.isStop bexp then (actOfferToString act) ++ ".Nil" else (actOfferToString act) ++ "." ++ bExprToString bexp
-bExprToString (TxsDefs.view -> BehExprDefs.Choice bexps) = foldl (\str exp -> str ++ " + " ++ bExprToString exp) "" bexps
+bExprToString (TxsDefs.view -> BehExprDefs.ActionPref act bexp) = if TxsDefs.isStop bexp then (actOfferToString act) ++ ".Nil" else (actOfferToString act) ++ ".(" ++ bExprToString bexp ++ ")"
+bExprToString (TxsDefs.view -> BehExprDefs.Choice bexps) = List.intercalate " + " (map bExprToString bexps)
 bExprToString _ = "No evidence-BExpr!"
 
 addTo2Tup :: (a,b) -> c -> (a,b,c)

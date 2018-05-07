@@ -29,9 +29,11 @@ import Data.Set as Set (Set)
 import qualified Data.Set as Set
 import Data.Map as Set (Map)
 import qualified Data.Map as Map
+import qualified Data.Maybe as Maybe
 
 import qualified Data.Text           as T
 
+import qualified DistGraph
 import qualified SplitGraph
 import qualified SuspAut
 import qualified Aut
@@ -53,16 +55,22 @@ nComplete :: [Set TxsDefs.ChanId] -> [Set TxsDefs.ChanId] ->
              TxsDefs.StatId -> [TxsDefs.Trans] ->
              IOC.IOC (Maybe TxsDefs.PurpDef)
 
-nComplete insyncs outsyncs initial transs = do
-          IOC.putMsgs [ EnvData.TXS_CORE_USER_ERROR (
-              let aut = SuspAut.stautToSusp initial transs (Util.getChanSet insyncs) (Util.getChanSet outsyncs) in
-                show $ SplitGraph.buildSplitGraph aut
-                ) ]
+nComplete insyncs outsyncs initial@(TxsDefs.StatId nm uid (TxsDefs.ProcId nm' uid' _ _ _)) transs = do
+    let aut = SuspAut.stautToSusp initial transs (Util.getChanSet insyncs) (Util.getChanSet outsyncs)
+        graph = SplitGraph.buildSplitGraph aut
+        dg = DistGraph.buildDistGraph aut graph (Aut.states aut)
+        splsyncs = [ Set.singleton StdTDefs.chanIdQstep
+                            , Set.singleton StdTDefs.chanIdHit
+                            , Set.singleton StdTDefs.chanIdMiss
+                            ]
+    IOC.putMsgs [ EnvData.TXS_CORE_USER_ERROR ( (show $ graph) ++ (case dg of Nothing -> "Distinguishing graph for all states does not exist!"; Just rdg -> Util.bExprToString rdg)) ]
 
           --  "compatible: " ++ SuspAut.tupleStateSetToString (Aut.computeCompRel aut)
           -- SplitGraph.makeRoot $ Set.fromList [1,2,3]
           -- map stateToName $ getStatesFromTransList transs []
-          return Nothing
+    case dg of
+        Nothing -> return Nothing
+        Just realDG -> return $ Just $ TxsDefs.PurpDef insyncs outsyncs splsyncs [(TxsDefs.GoalId (Set.foldl (\str s -> str <> (Util.stateToName $ Aut.sid s)) "Goal_DG_" (Aut.states aut)) (uid*uid'+1), realDG)]
 
 
 
