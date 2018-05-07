@@ -1,0 +1,46 @@
+{-
+TorXakis - Model Based Testing
+Copyright (c) 2015-2016 TNO and Radboud University
+See license.txt
+-}
+
+
+-- ----------------------------------------------------------------------------------------- --
+-- Test for NComplete
+
+
+CHANDEF  Chans
+ ::=
+      A, B, X, Y, DELTA
+ENDDEF
+
+
+STAUTDEF test [ A, B, X, Y, DELTA ] ( )
+ ::=
+      STATE  idle, sx, sy
+      VAR 
+      INIT   idle
+      TRANS  idle  ->  A  ->  sx
+             sx    ->  A  ->  sx
+             sx    ->  B  ->  sy
+             idle  ->  B  ->  sy
+             sy    ->  B  ->  sy
+             sy    ->  A  ->  sx
+             sx    ->  X  ->  idle
+             sy    ->  Y  ->  idle
+			idle   ->  DELTA -> idle
+ENDDEF
+
+
+MODELDEF  Test
+ ::=
+      CHAN IN    A, B
+      CHAN OUT   X, Y, DELTA
+      BEHAVIOUR
+                 test [ A, B, X, Y, DELTA ] ( )
+ENDDEF
+
+
+-- ----------------------------------------------------------------------------------------- --
+-- ----------------------------------------------------------------------------------------- --
+

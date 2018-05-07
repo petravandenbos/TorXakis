@@ -1,4 +1,4 @@
-module Aut(Aut(..),State(..),show,after,computeCompRel,inp,out,enab,initial,states,inputs,outputs,states, outSet) where
+module Aut(Aut(..),State(..),show,after,computeCompRel,inp,out,enab,initial,states,inputs,outputs,states, outSet,afterSet) where
 
 import Data.Set as Set (Set)
 import qualified Data.Set as Set
@@ -38,10 +38,12 @@ after state mu aut =  case (Map.lookup mu (trans state)) of
                                     Nothing -> Nothing
                                     Just s -> Map.lookup s (idStateMap aut)
 
-computeCompRel :: (Ord a, Ord b) => (Aut a b) -> Set (State a b,State a b)
-computeCompRel aut@(Aut _ states _ _ _) =
-                    let first = Set.fromList [(q,q') | q <- Set.toList states,  q' <- Set.toList states] in
-                        let second = expandCompRel aut first in
+afterSet :: (Ord a, Ord b) => Set (State a b) -> b -> (Aut a b) -> Set (State a b)
+afterSet stateSet mu aut = Set.foldl (\set s -> case after s mu aut of Nothing -> set; Just s' -> Set.insert s' set) Set.empty stateSet
+
+computeCompRel :: (Ord a, Ord b) => Aut a b -> Set (State a b,State a b)
+computeCompRel aut = let first = Set.fromList [(q,q') | q <- Set.toList (states aut),  q' <- Set.toList (states aut)]
+                         second = expandCompRel aut first in
                             computeCompRec first second (expandCompRel aut)
 
 computeCompRec :: (Eq a, Eq b) => Set (State a b,State a b) -> Set (State a b,State a b) -> (Set (State a b,State a b) -> Set (State a b,State a b)) -> Set (State a b,State a b)

@@ -1,0 +1,48 @@
+{-
+TorXakis - Model Based Testing
+Copyright (c) 2015-2016 TNO and Radboud University
+See license.txt
+-}
+
+
+-- ----------------------------------------------------------------------------------------- --
+-- Test for NComplete
+
+
+CHANDEF  Chans
+ ::=
+      A, X, Y, Z
+ENDDEF
+
+
+STAUTDEF test [ A, X, Y, Z ] ( )
+ ::=
+      STATE  s1, s2, s3, s4, s5
+      VAR 
+      INIT   s1
+      TRANS s1 -> Y -> s4
+            s2 -> A -> s4
+			s2 -> X -> s4
+			s2 -> Z -> s1
+			s3 -> A -> s2
+			s3 -> X -> s2
+			s3 -> Z -> s4
+			s4 -> A -> s4
+			s4 -> X -> s5
+			s4 -> Z -> s3
+			s5 -> Y -> s1
+ENDDEF
+
+
+MODELDEF  Test
+ ::=
+      CHAN IN    A
+      CHAN OUT   X, Y, Z
+      BEHAVIOUR
+                 test [ A, X, Y, Z ] ( )
+ENDDEF
+
+
+-- ----------------------------------------------------------------------------------------- --
+-- ----------------------------------------------------------------------------------------- --
+

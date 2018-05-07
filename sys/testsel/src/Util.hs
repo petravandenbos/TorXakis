@@ -31,3 +31,6 @@ bExprToString :: TxsDefs.BExpr -> String
 bExprToString (TxsDefs.view -> BehExprDefs.ActionPref act bexp) = if TxsDefs.isStop bexp then (actOfferToString act) ++ ".Nil" else (actOfferToString act) ++ "." ++ bExprToString bexp
 bExprToString (TxsDefs.view -> BehExprDefs.Choice bexps) = foldl (\str exp -> str ++ " + " ++ bExprToString exp) "" bexps
 bExprToString _ = "No evidence-BExpr!"
+
+addTo2Tup :: (a,b) -> c -> (a,b,c)
+addTo2Tup (a,b) c = (a,b,c)
